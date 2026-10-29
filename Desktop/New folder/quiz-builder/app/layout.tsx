@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar";
+import DashboardLayout from "@/components/DashboardLayout";
 
+// Load Inter Google Font
 const inter = Inter({ subsets: ["latin"] });
 
+// Application Metadata for LMS
 export const metadata: Metadata = {
   title: "Pacer LMS Quiz Builder",
-  description: "Professional LMS Quiz Builder Module",
+  description: "Professional LMS Quiz Builder Module for Instructors",
 };
 
 export default function RootLayout({
@@ -17,21 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} bg-slate-50 flex h-screen overflow-hidden`}>
-        {/* Left Sidebar */}
-        <Sidebar />
-
-        {/* Right Main Container */}
-        <div className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Top Navbar */}
-          <Navbar />
-
-          {/* Scrollable Page Content */}
-          <main className="flex-1 overflow-y-auto p-8">
-            {children}
-          </main>
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      {/* Global Body with Inter font and suppressed extension hydration warnings */}
+      <body suppressHydrationWarning className={`${inter.className} bg-slate-50 overflow-hidden`}>
+        {/* Main Dashboard Wrapper that holds Sidebar and Navbar */}
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
       </body>
     </html>
   );

@@ -1,23 +1,27 @@
+'use client';
+
+import React from 'react';
+import DashboardMetrics from '@/components/DashboardMetrics';
 import QuizSettings from '@/components/QuizSettings';
 import QuestionEditor from '@/components/QuestionEditor';
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto space-y-10">
-        <header className="text-center">
-          <h1 className="text-3xl font-extrabold text-slate-900">Quiz Builder Dashboard</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Configure your quiz settings and build questions below.
-          </p>
-        </header>
+    <div className="space-y-10">
+      
+      {/* 1. Top Metrics Component */}
+      <DashboardMetrics />
 
-        {/* 1. Quiz Settings Section */}
+      {/* 2. Quiz Settings Component */}
+      <section className="border-t border-slate-200 pt-8">
         <QuizSettings />
+      </section>
 
-        {/* 2. Question Editor Section */}
+      {/* 3. Question Builder Component */}
+      <section className="border-t border-slate-200 pt-8">
         <QuestionEditor />
-      </div>
-    </main>
+      </section>
+
+    </div>
   );
 }
