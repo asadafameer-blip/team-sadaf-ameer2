@@ -10,11 +10,13 @@ import {
   Edit, 
   BookOpen,
   CheckCircle2,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import QuestionEditor from '@/components/QuestionEditor'; // <-- Apna QuestionEditor import kar liya
 
 interface QuestionItem {
   id: string;
@@ -22,11 +24,18 @@ interface QuestionItem {
   course: string;
   marks: number;
   questionType: string;
+  text?: string;
+  description?: string;
+  data?: Record<string, unknown>;
 }
 
 export default function QuestionBankPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('All');
+
+  // Modal & Editor state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState<QuestionItem | null>(null);
 
   // Client requirements ke mutabiq Question & Topic management data
   const [questions, setQuestions] = useState<QuestionItem[]>([
@@ -35,30 +44,75 @@ export default function QuestionBankPage() {
       topic: 'React Hooks & State Management',
       course: 'Frontend Web Development',
       marks: 5,
-      questionType: 'Multiple Choice',
+      questionType: 'mcq',
+      text: 'What is the primary purpose of useState in React?',
+      data: {}
     },
     {
       id: 'QB-02',
       topic: 'Responsive Flexbox Layouts in Tailwind',
       course: 'UI/UX Styling',
       marks: 10,
-      questionType: 'Practical / Coding',
+      questionType: 'ordering',
+      text: 'Arrange the flex properties correctly.',
+      data: {}
     },
     {
       id: 'QB-03',
       topic: 'Next.js 14 App Router Navigation',
       course: 'Advanced Frontend',
       marks: 5,
-      questionType: 'True / False',
+      questionType: 'true_false',
+      text: 'Next.js 14 uses server components by default.',
+      data: {}
     },
     {
       id: 'QB-04',
       topic: 'Database Schema & Relational Queries',
       course: 'Backend Architecture',
       marks: 15,
-      questionType: 'Descriptive',
+      questionType: 'short_answer',
+      text: 'Define primary key constraints.',
+      data: {}
     },
   ]);
+
+  // Open modal for adding a new question
+  const handleAddNew = () => {
+    setEditingQuestion(null);
+    setIsModalOpen(true);
+  };
+
+  // Open modal for editing an existing question
+  const handleEdit = (item: QuestionItem) => {
+    setEditingQuestion(item);
+    setIsModalOpen(true);
+  };
+
+  // Delete question handler
+  const handleDelete = (id: string) => {
+    setQuestions(questions.filter((q) => q.id !== id));
+  };
+
+  // Save question handler (from QuestionEditor)
+  const handleSaveQuestion = (savedData: any) => {
+    if (editingQuestion) {
+      // Update existing
+      setQuestions(questions.map((q) => q.id === editingQuestion.id ? { ...q, ...savedData, topic: savedData.text || q.topic } : q));
+    } else {
+      // Add new
+      const newItem: QuestionItem = {
+        id: `QB-0${questions.length + 1}`,
+        topic: savedData.text || 'New Quiz Topic',
+        course: selectedCourse === 'All' ? 'Frontend Web Development' : selectedCourse,
+        marks: savedData.points || 5,
+        questionType: savedData.questionType,
+        ...savedData
+      };
+      setQuestions([newItem, ...questions]);
+    }
+    setIsModalOpen(false);
+  };
 
   const filteredQuestions = questions.filter((q) => {
     const matchesSearch = q.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -68,7 +122,7 @@ export default function QuestionBankPage() {
   });
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 bg-slate-50 min-h-screen">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 bg-slate-50 min-h-screen relative">
       
       {/* Instructor Portal Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -81,7 +135,10 @@ export default function QuestionBankPage() {
             Create, organize, and add specific course topics & questions for student quizzes.
           </p>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 shadow-sm rounded-lg px-4 py-2">
+        <Button 
+          onClick={handleAddNew}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2 shadow-sm rounded-lg px-4 py-2 cursor-pointer"
+        >
           <Plus className="h-4 w-4" />
           Add Topic & Question
         </Button>
@@ -145,7 +202,7 @@ export default function QuestionBankPage() {
             <button
               key={course}
               onClick={() => setSelectedCourse(course)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 selectedCourse === course
                   ? 'bg-indigo-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -186,10 +243,20 @@ export default function QuestionBankPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
-                  <Button variant="outline" size="sm" className="h-9 px-3 text-slate-600 border-slate-200 hover:bg-slate-50">
+                  <Button 
+                    onClick={() => handleEdit(item)}
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 px-3 text-slate-600 border-slate-200 hover:bg-slate-50 cursor-pointer"
+                  >
                     <Edit className="h-4 w-4 mr-1 text-slate-500" /> Edit
                   </Button>
-                  <Button variant="outline" size="sm" className="h-9 px-3 text-rose-600 border-rose-200 hover:bg-rose-50">
+                  <Button 
+                    onClick={() => handleDelete(item.id)}
+                    variant="outline" 
+                    size="sm" 
+                    className="h-9 px-3 text-rose-600 border-rose-200 hover:bg-rose-50 cursor-pointer"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -206,6 +273,37 @@ export default function QuestionBankPage() {
           </div>
         )}
       </div>
+
+      {/* Modal / Popup for QuestionEditor */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b bg-slate-50">
+              <h2 className="text-lg font-bold text-slate-800">
+                {editingQuestion ? 'Edit Question & Settings' : 'Add New Question & Topic'}
+              </h2>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              <QuestionEditor 
+                question={editingQuestion ? {
+                  text: editingQuestion.topic,
+                  questionType: editingQuestion.questionType || 'mcq',
+                  points: editingQuestion.marks || 5,
+                  data: editingQuestion.data || {}
+                } : undefined}
+                onSave={handleSaveQuestion}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

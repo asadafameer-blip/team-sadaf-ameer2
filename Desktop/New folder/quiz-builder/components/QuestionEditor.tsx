@@ -1,184 +1,157 @@
-'use client';
+// components/QuestionEditor.tsx
+import React, { useState } from 'react';
+import MCQEditor from './quiz/question-types/MCQEditor';
+import TrueFalseEditor from './quiz/question-types/TrueFalseEditor';
+import ShortAnswerEditor from './quiz/question-types/ShortAnswerEditor';
+import FillBlankEditor from './quiz/question-types/FillBlankEditor';
+import MultiSelectEditor from './quiz/question-types/MultiSelectEditor';
+import OrderingEditor from './quiz/question-types/OrderingEditor';
+import MatchingEditor from './quiz/question-types/MatchingEditor';
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Trash2, Plus, CheckCircle2 } from 'lucide-react';
-
-// Single question data type definition
-export interface QuestionData {
-  id: string;
-  questionText: string;
-  options: string[];
-  correctOptionIndex: number;
-  marks: number;
+/**
+ * Interface representing the complete structure of a Question.
+ */
+interface Question {
+  id?: string;
+  text: string;
+  description?: string;
+  questionType: string;
+  points: number;
+  data: Record<string, unknown>;
 }
 
+/**
+ * Props for the QuestionEditor component.
+ */
 interface QuestionEditorProps {
-  question?: QuestionData;
-  index?: number;
-  onUpdateQuestion?: (updated: QuestionData) => void;
-  onDeleteQuestion?: (id: string) => void;
+  question?: Question;
+  onSave: (updatedQuestion: Question) => void;
 }
 
-export default function QuestionEditor({
-  question = { id: '1', questionText: '', options: ['', ''], correctOptionIndex: 0, marks: 5 },
-  index = 0,
-  onUpdateQuestion = () => {},
-  onDeleteQuestion = () => {},
-}: QuestionEditorProps) {
-  
-  // Handle option text change securely
-  const handleOptionChange = (optionIndex: number, value: string) => {
-    const updatedOptions = [...question.options];
-    updatedOptions[optionIndex] = value;
-    onUpdateQuestion({ ...question, options: updatedOptions });
-  };
-
-  // Add a new empty option to this question
-  const handleAddOption = () => {
-    if (question.options.length >= 6) return; // limit max 6 options
-    onUpdateQuestion({
-      ...question,
-      options: [...question.options, ''],
-    });
-  };
-
-  // Remove a specific option item
-  const handleRemoveOption = (optionIndex: number) => {
-    if (question.options.length <= 2) return; // keep minimum 2 options
-    const updatedOptions = question.options.filter((_, idx) => idx !== optionIndex);
-    
-    let newCorrectIndex = question.correctOptionIndex;
-    if (question.correctOptionIndex === optionIndex) {
-      newCorrectIndex = 0;
-    } else if (question.correctOptionIndex > optionIndex) {
-      newCorrectIndex--;
+export default function QuestionEditor({ question, onSave }: QuestionEditorProps) {
+  // Initialize local state with existing question or default values
+  const [currentQuestion, setCurrentQuestion] = useState<Question>(
+    question || {
+      text: '',
+      description: '',
+      questionType: 'mcq',
+      points: 1,
+      data: {},
     }
+  );
 
-    onUpdateQuestion({
-      ...question,
-      options: updatedOptions,
-      correctOptionIndex: newCorrectIndex,
+  /**
+   * Handles question type switching and resets data payload to prevent type mismatch.
+   */
+  const handleTypeChange = (newType: string) => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      questionType: newType,
+      data: {}, // Reset data structure on type switch
     });
+  };
+
+  /**
+   * Updates question type-specific dynamic data payload.
+   */
+  const handleDataChange = (newData: Record<string, unknown>) => {
+    setCurrentQuestion({
+      ...currentQuestion,
+      data: newData,
+    });
+  };
+
+  /**
+   * Conditionally renders the appropriate sub-editor component based on the selected question type.
+   */
+  const renderTypeEditor = () => {
+    switch (currentQuestion.questionType) {
+      case 'mcq':
+        return <MCQEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'true_false':
+        return <TrueFalseEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'short_answer':
+        return <ShortAnswerEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'fill_blank':
+        return <FillBlankEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'multi_select':
+        return <MultiSelectEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'ordering':
+        return <OrderingEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      case 'matching':
+        return <MatchingEditor questionData={currentQuestion.data as any} onChange={handleDataChange} />;
+      default:
+        return <p className="text-sm text-gray-500 py-4 text-center">Select a question type to configure settings.</p>;
+    }
   };
 
   return (
-    <Card className="bg-white border-slate-200 shadow-sm rounded-2xl">
-      <CardContent className="p-4 sm:p-6 space-y-4">
-        
-        {/* Header with question number and delete question button */}
-        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <span className="text-xs sm:text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-            Question #{index + 1}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onDeleteQuestion(question.id)}
-            className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 px-2 text-xs"
-          >
-            <Trash2 className="w-4 h-4 mr-1" /> Delete Question
-          </Button>
-        </div>
-
-        {/* Main Question Title Input */}
+    <div className="space-y-6 p-4 sm:p-6 bg-white border rounded-xl shadow-sm w-full">
+      {/* Header and Save Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">
-            Question Title / Prompt
-          </label>
-          <Input
-            placeholder="e.g. What is the primary purpose of React useEffect hook?"
-            value={question.questionText}
-            onChange={(e) =>
-              onUpdateQuestion({ ...question, questionText: e.target.value })
-            }
-            className="bg-white border-slate-300 text-xs sm:text-sm text-slate-900"
+          <h2 className="text-lg font-bold text-gray-800">Question Editor</h2>
+          <p className="text-xs text-gray-500">Configure quiz question details and type settings.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onSave(currentQuestion)}
+          className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors"
+        >
+          Save Question
+        </button>
+      </div>
+
+      {/* Basic Question Fields */}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Question Text</label>
+          <textarea
+            value={currentQuestion.text}
+            onChange={(e) => setCurrentQuestion({ ...currentQuestion, text: e.target.value })}
+            placeholder="Enter your question here..."
+            className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            rows={2}
           />
         </div>
 
-        {/* Options List section */}
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold text-slate-700">
-            Multiple Choice Options (Select green check for correct answer)
-          </label>
-          
-          {question.options.map((opt, optIdx) => (
-            <div key={optIdx} className="flex items-center gap-2">
-              {/* Correct option selector button */}
-              <button
-                type="button"
-                onClick={() =>
-                  onUpdateQuestion({ ...question, correctOptionIndex: optIdx })
-                }
-                title="Mark as correct answer"
-                className={`p-1.5 rounded-lg border transition ${
-                  question.correctOptionIndex === optIdx
-                    ? 'bg-emerald-500 text-white border-emerald-500'
-                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-              </button>
-
-              {/* Option input field */}
-              <Input
-                placeholder={`Option ${optIdx + 1}`}
-                value={opt}
-                onChange={(e) => handleOptionChange(optIdx, e.target.value)}
-                className="bg-white border-slate-300 text-xs sm:text-sm text-slate-900 flex-1"
-              />
-
-              {/* Option delete button */}
-              {question.options.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveOption(optIdx)}
-                  className="text-slate-400 hover:text-rose-500 p-1"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Add Option Button with explicit type="button" */}
-          {question.options.length < 6 && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddOption}
-              className="text-xs text-indigo-600 border-dashed border-indigo-300 hover:bg-indigo-50 mt-2"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Question Type Selector */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Question Type</label>
+            <select
+              value={currentQuestion.questionType}
+              onChange={(e) => handleTypeChange(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add Option
-            </Button>
-          )}
-        </div>
+              <option value="mcq">Multiple Choice (MCQ)</option>
+              <option value="true_false">True / False</option>
+              <option value="short_answer">Short Answer</option>
+              <option value="fill_blank">Fill in the Blanks</option>
+              <option value="multi_select">Multi-select</option>
+              <option value="ordering">Ordering / Sequence</option>
+              <option value="matching">Matching Pairs</option>
+            </select>
+          </div>
 
-        {/* Marks per question section */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-medium">Question Weightage</span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-600 font-semibold">Marks:</span>
-            <Input
+          {/* Points Input */}
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Points</label>
+            <input
               type="number"
               min={1}
-              value={question.marks}
-              onChange={(e) =>
-                onUpdateQuestion({
-                  ...question,
-                  marks: parseInt(e.target.value) || 1,
-                })
-              }
-              className="w-20 bg-white border-slate-300 text-xs text-slate-900 h-8"
+              value={currentQuestion.points}
+              onChange={(e) => setCurrentQuestion({ ...currentQuestion, points: Number(e.target.value) })}
+              className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
         </div>
+      </div>
 
-      </CardContent>
-    </Card>
+      {/* Dynamic Type-Specific Editor Component Container */}
+      <div className="pt-2 border-t">
+        {renderTypeEditor()}
+      </div>
+    </div>
   );
 }
