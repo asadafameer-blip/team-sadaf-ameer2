@@ -9,41 +9,38 @@ import { ArrowLeft, Save, PlusCircle, Clock, BookOpen, Layers } from 'lucide-rea
 import QuestionEditor, { QuestionData } from '@/components/QuestionEditor';
 
 export default function CreateQuizPage() {
-  // Quiz ki basic details ka state
   const [quizTitle, setQuizTitle] = useState('');
   const [quizDescription, setQuizDescription] = useState('');
   const [durationMins, setDurationMins] = useState(30);
   const [category, setCategory] = useState('Web Development');
 
-  // Quiz ke andar mojood questions ki list
   const [questions, setQuestions] = useState<QuestionData[]>([
     {
       id: '1',
-      questionText: '',
-      options: ['', ''],
-      correctOptionIndex: 0,
-      marks: 5,
+      text: '',
+      description: '',
+      questionType: 'mcq',
+      points: 5,
+      data: {},
     },
   ]);
 
-  // Naya empty question add karne ka function
   const handleAddNewQuestion = () => {
     const newQ: QuestionData = {
       id: Date.now().toString(),
-      questionText: '',
-      options: ['', ''],
-      correctOptionIndex: 0,
-      marks: 5,
+      text: '',
+      description: '',
+      questionType: 'mcq',
+      points: 5,
+      data: {},
     };
     setQuestions([...questions, newQ]);
   };
 
-  // Kisi specific question ko update karne ka function
   const handleUpdateQuestion = (updatedQ: QuestionData) => {
     setQuestions(questions.map((q) => (q.id === updatedQ.id ? updatedQ : q)));
   };
 
-  // Question delete karne ka function
   const handleDeleteQuestion = (id: string) => {
     if (questions.length === 1) {
       alert('Quiz must contain at least one question!');
@@ -52,7 +49,6 @@ export default function CreateQuizPage() {
     setQuestions(questions.filter((q) => q.id !== id));
   };
 
-  // Quiz save ya publish karne ka handler
   const handleSaveQuiz = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quizTitle.trim()) {
@@ -75,8 +71,6 @@ export default function CreateQuizPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12 p-4 sm:p-6">
-      
-      {/* Top Header Navigation bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
           <Link href="/quizzes">
@@ -100,8 +94,6 @@ export default function CreateQuizPage() {
       </div>
 
       <form onSubmit={handleSaveQuiz} className="space-y-6">
-        
-        {/* General Quiz Configuration Card */}
         <Card className="bg-white border-slate-200 shadow-sm rounded-2xl">
           <CardContent className="p-4 sm:p-6 space-y-4">
             <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -109,8 +101,6 @@ export default function CreateQuizPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
-              {/* Quiz Title */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Quiz Title <span className="text-rose-500">*</span>
@@ -124,7 +114,6 @@ export default function CreateQuizPage() {
                 />
               </div>
 
-              {/* Description */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Description / Instructions
@@ -138,7 +127,6 @@ export default function CreateQuizPage() {
                 />
               </div>
 
-              {/* Duration in Minutes */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-slate-500" /> Duration (Minutes)
@@ -152,7 +140,6 @@ export default function CreateQuizPage() {
                 />
               </div>
 
-              {/* Category */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5 text-slate-500" /> Subject Category
@@ -164,12 +151,10 @@ export default function CreateQuizPage() {
                   className="bg-white border-slate-300 text-xs sm:text-sm text-slate-900"
                 />
               </div>
-
             </div>
           </CardContent>
         </Card>
 
-        {/* Dynamic Question Builder Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-slate-900">
@@ -185,18 +170,14 @@ export default function CreateQuizPage() {
             </Button>
           </div>
 
-          {/* Loop through questions array and render QuestionEditor component */}
-          {questions.map((q, idx) => (
+          {questions.map((q) => (
             <QuestionEditor
               key={q.id}
               question={q}
-              index={idx}
               onUpdateQuestion={handleUpdateQuestion}
-              onDeleteQuestion={handleDeleteQuestion}
             />
           ))}
         </div>
-
       </form>
     </div>
   );
